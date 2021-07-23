@@ -14,9 +14,6 @@ logger = logging.getLogger("make_request")
 nlp = spacy.load("en_core_web_sm")
 contextualSpellCheck.add_to_pipe(nlp)
 
-# cv2.imshow('image', image)
-# cv2.waitKey(0)
-
 
 def convert_pdf_to_image(document_path, dpi=350):
     images = []
@@ -44,10 +41,12 @@ def thresholding(image):
 def postprocess_text(text):
     text = text[text.conf != -1]
     answer = []
-    lines = text.groupby('block_num')['text'].apply(lambda x: " ".join(list(x)))
-    conf = text.groupby(['block_num'])['conf'].mean()
+    lines = text.groupby("block_num")["text"].apply(lambda x: " ".join(list(x)))
+    conf = text.groupby(["block_num"])["conf"].mean()
     logger.info("Postprocessing text")
-    for (_, conf_row), (_, line_row) in zip(conf.to_frame().iterrows(), lines.to_frame().iterrows()):
+    for (_, conf_row), (_, line_row) in zip(
+        conf.to_frame().iterrows(), lines.to_frame().iterrows()
+    ):
         if conf_row["conf"] < 90.0:
             doc = nlp(line_row["text"])
             if doc._.performed_spellCheck:
@@ -85,7 +84,7 @@ def predict(input, output, verbose):
             logger.info("Processing image")
             image_processed = get_grayscale(image)
             image_processed = thresholding(image_processed)
-            text = pytesseract.image_to_data(image_processed, output_type='data.frame')
+            text = pytesseract.image_to_data(image_processed, output_type="data.frame")
             logger.info("Postprocessing text")
             text = postprocess_text(text)
             answer.append(text)
@@ -99,7 +98,7 @@ def predict(input, output, verbose):
         logger.info("Processing images")
         image_processed = get_grayscale(image)
         image_processed = thresholding(image_processed)
-        text = pytesseract.image_to_data(image_processed, output_type='data.frame')
+        text = pytesseract.image_to_data(image_processed, output_type="data.frame")
         answer = postprocess_text(text)
         logger.info("Writing extracted text to the file")
         with open(output, "w") as fout:
